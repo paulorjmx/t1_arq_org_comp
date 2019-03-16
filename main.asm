@@ -65,6 +65,14 @@
 
         li $t1, 1
         beq $t0, $t1, soma
+        li $t1, 2
+        beq $t0, $t1, subtra
+        li $t1, 3
+        beq $t0, $t1, multip
+        li $t1, 4
+        beq $t0, $t1, divisao
+        li $t1, 5
+        beq $t0, $t1, potencia
 
     soma:
         move $a0, $t2   # Put the first argument in $a0
@@ -72,11 +80,50 @@
         jal soma_func
 
 
-        move $a0, $v0   # Put the result in $a0
+        move $a0, $v0   # Get the result and put in $a0 that is arg of print_result
         jal print_result    # Call function to print result (void print_result(int result))
 
         j user_choose
 
+    subtra:
+        move $a0, $t2   # Put the first arg in $a0
+        move $a1, $t3   # Put the second arg in $a1
+        jal sub_func
+
+        move $a0, $v0   # Get the result and put in $a0 that is arg of print_result
+        jal print_result
+
+        j user_choose
+
+    multip:
+        move $a0, $t2
+        move $a1, $t3
+        jal mult_func
+
+        move $a0, $v0
+        jal print_result
+
+        j user_choose
+
+    divisao:
+        move $a0, $t2
+        move $a1, $t3
+        jal divisao_func
+
+        move $a0, $v0
+        jal print_result
+
+        j user_choose
+
+    potencia:
+        move $a0, $t2
+        move $a1, $t3
+        jal potencia_func
+
+        move $a0, $v0
+        jal print_result
+
+        j user_choose
 
 
     others_ops:
@@ -225,5 +272,79 @@
         lw $a0, 8($sp)
         lw $ra, 4($sp)
         lw $fp, 0($sp)
+
+        jr $ra
+
+    sub_func:
+        addi $sp, $sp, -16
+        sw $a1, 12($sp)
+        sw $a0, 8($sp)
+        sw $ra, 4($sp)
+        sw $fp, 0($sp)
+        move $fp, $sp
+
+        sub $v0, $a0, $a1
+
+        lw $a1, 12($sp)
+        lw $a0, 8($sp)
+        lw $ra, 4($sp)
+        lw $fp, 0($sp)
+
+        jr $ra
+
+    mult_func:
+        addi $sp, $sp, -16
+        sw $a1, 12($sp)
+        sw $a0, 8($sp)
+        sw $ra, 4($sp)
+        sw $fp, 0($sp)
+        move $fp, $sp
+
+        mul $v0, $a0, $a1
+
+        lw $a1, 12($sp)
+        lw $a0, 8($sp)
+        lw $ra, 4($sp)
+        lw $fp, 0($sp)
+
+        jr $ra
+
+    divisao_func:
+        addi $sp, $sp, -16
+        sw $a1, 12($sp)
+        sw $a0, 8($sp)
+        sw $ra 4($sp)
+        sw $fp, 0($sp)
+        move $fp, $sp
+
+        div $v0, $a0, $a1
+
+        lw $a1, 12($sp)
+        lw $a0, 8($sp)
+        lw $ra, 4($sp)
+        lw $fp, 0($sp)
+
+        jr $ra
+
+    potencia_func:
+        addi $sp, $sp, -16
+        sw $a1, 12($sp)
+        sw $a0, 8($sp)
+        sw $ra, 4($sp)
+        sw $fp, 0($sp)
+        move $fp, $sp
+
+        li $t8, 1
+        li $v0, 1
+        p_loop: blt $a1, $t8, sai_p_loop
+            mul $v0, $v0, $a0
+            addi $a1, $a1, -1
+            j p_loop
+
+        sai_p_loop:
+            lw $a1, 12($sp)
+            lw $a0, 8($sp)
+            lw $ra, 4($sp)
+            lw $fp, 0($sp)
 
         jr $ra
