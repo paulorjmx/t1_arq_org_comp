@@ -3,8 +3,8 @@
 
 
 .data
-    str_title:  .asciiz "Bem-vindo a Calculadora Assembly\n\n"
-    str_choose: .asciiz "Escolha uma das opcoes abaixo\n\n"
+    str_title:  .asciiz "Bem-vindo a Calculadora Assembly\n"
+    str_choose: .asciiz "\nEscolha uma das opcoes abaixo\n\n"
     str_op1:    .asciiz "[1] Soma\n"
     str_op2:    .asciiz "[2] Subtracao\n"
     str_op3:    .asciiz "[3] Multiplicacao\n"
@@ -22,7 +22,7 @@
     str_error_choice:   .asciiz "\nErro: Escolha uma opcao valida!\n"
     str_continue:   .asciiz "\n(Aperte Enter para continuar)\n"
     str_enter:  .byte
-    #str_res: .asciiz "Escolha: "
+    str_res: .asciiz "\nResultado: "
 
 .text
 
@@ -50,6 +50,7 @@
 
         # Gets the first operand
         li $v0, 5
+        syscall
         move $t2, $v0
 
         # Print: Type the second operand
@@ -59,14 +60,22 @@
 
         # Gets the second operand
         li $v0, 5
+        syscall
         move $t3, $v0
 
-        
+        li $t1, 1
+        beq $t0, $t1, soma
 
     soma:
         move $a0, $t2   # Put the first argument in $a0
         move $a1, $t3   # Put the second argument in $a1
         jal soma_func
+
+
+        move $a0, $v0   # Put the result in $a0
+        jal print_result    # Call function to print result (void print_result(int result))
+
+        j user_choose
 
 
 
@@ -99,12 +108,13 @@
         syscall
 
 
+# The functions used in the program is below this section
 
     # Print the menu, and return the user choice in $v0
     print_menu:
         addi $sp, $sp, -8
-        sw $ra, 0($sp)
-        sw $fp, -4($sp)
+        sw $ra, 4($sp)
+        sw $fp, 0($sp)
         move $fp, $sp
 
         la $a0, str_choose
@@ -163,25 +173,57 @@
         li $v0, 5
         syscall
 
-        lw $ra, 0($sp)
-        lw $fp, -4($sp)
+        lw $ra, 4($sp)
+        lw $fp, 0($sp)
         addi $sp, $sp, 8
+        jr $ra
+
+    # Print result
+    print_result:
+        addi $sp, $sp, -12
+        sw $a0, 8($sp)
+        sw $ra, 4($sp)
+        sw $fp, 0($sp)
+        move $fp, $sp
+
+        la $a0, str_res
+        li $v0, 4
+        syscall
+
+        lw $a0, 8($fp)
+        li $v0, 1
+        syscall
+
+        la $a0, str_continue
+        li $v0, 4
+        syscall
+
+        la $a0, str_enter
+        li $a1, 1
+        li $v0, 8
+        syscall
+
+        lw $a0, 8($sp)
+        lw $ra, 4($sp)
+        lw $fp, 0($sp)
+
         jr $ra
 
 
     # Sum of two numbers
     soma_func:
-        addi $sp, $sp, -12
-        sw $a0, 12($sp)
-        sw $a1, 8($sp)
+        addi $sp, $sp, -16
+        sw $a1, 12($sp)
+        sw $a0, 8($sp)
         sw $ra, 4($sp)
         sw $fp, 0($sp)
+        move $fp, $sp
 
         add $v0, $a0, $a1
 
-        lw $a0, 12($sp)
-        lw $a1, 8($sp)
+        lw $a1, 12($sp)
+        lw $a0, 8($sp)
         lw $ra, 4($sp)
-        lw $fp 0($sp)
+        lw $fp, 0($sp)
 
         jr $ra
