@@ -11,7 +11,7 @@
     str_op4:    .asciiz "[4] Divisao\n"
     str_op5:    .asciiz "[5] Potencia\n"
     str_op6:    .asciiz "[6] IMC (Indice de Massa Corporal)\n"
-    str_op7:    .asciiz "[7] Sequencia de Fibonnaci\n"
+    str_op7:    .asciiz "[7] Sequencia de Fibonacci\n"
     str_op8:    .asciiz "[8] Raiz Quadrada\n"
     str_op9:    .asciiz "[9] Tabuada de um numero\n"
     str_op10:   .asciiz "[10] Fatorial\n"
@@ -73,6 +73,10 @@
         beq $t0, $t1, divisao
         li $t1, 5
         beq $t0, $t1, potencia
+        li $t1, 6
+        beq $t0, $t1, imc
+        li $t1, 7
+        beq $t0, $t1, fibonacci
 
     soma:
         move $a0, $t2   # Put the first argument in $a0
@@ -124,6 +128,19 @@
         jal print_result
 
         j user_choose
+
+    imc:
+        move $a0, $t2
+        move $a1, $t3
+        jal imc_func
+
+        move $a0, $v0
+        jal print_result
+
+        j user_choose
+
+    fibonacci:
+        
 
 
     others_ops:
@@ -346,5 +363,23 @@
             lw $a0, 8($sp)
             lw $ra, 4($sp)
             lw $fp, 0($sp)
+
+        jr $ra
+
+    imc_func:
+        addi $sp, $sp, -16
+        sw $a1, 12($sp)
+        sw $a0, 8($sp)
+        sw $ra, 4($sp)
+        sw $fp, 0($sp)
+        move $fp, $sp
+
+        mul $a1, $a1, $a1
+        div $v0, $a0, $a1
+
+        lw $a1, 12($sp)
+        lw $a0, 8($sp)
+        lw $ra, 4($sp)
+        lw $fp 0($sp)
 
         jr $ra
