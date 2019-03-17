@@ -140,7 +140,7 @@
         j user_choose
 
     fibonacci:
-        
+
 
 
     others_ops:
@@ -270,6 +270,7 @@
         lw $a0, 8($sp)
         lw $ra, 4($sp)
         lw $fp, 0($sp)
+        addi $sp, $sp, 12
 
         jr $ra
 
@@ -289,6 +290,7 @@
         lw $a0, 8($sp)
         lw $ra, 4($sp)
         lw $fp, 0($sp)
+        addi $sp, $sp, 16
 
         jr $ra
 
@@ -306,6 +308,7 @@
         lw $a0, 8($sp)
         lw $ra, 4($sp)
         lw $fp, 0($sp)
+        addi $sp, $sp, 16
 
         jr $ra
 
@@ -323,6 +326,7 @@
         lw $a0, 8($sp)
         lw $ra, 4($sp)
         lw $fp, 0($sp)
+        addi $sp, $sp, 16
 
         jr $ra
 
@@ -340,6 +344,7 @@
         lw $a0, 8($sp)
         lw $ra, 4($sp)
         lw $fp, 0($sp)
+        addi $sp, $sp, 16
 
         jr $ra
 
@@ -364,6 +369,8 @@
             lw $ra, 4($sp)
             lw $fp, 0($sp)
 
+        addi $sp, $sp, 16
+        
         jr $ra
 
     imc_func:
@@ -381,5 +388,6 @@
         lw $a0, 8($sp)
         lw $ra, 4($sp)
         lw $fp 0($sp)
+        addi $sp, $sp, 16
 
         jr $ra
