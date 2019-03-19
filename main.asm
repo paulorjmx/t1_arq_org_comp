@@ -20,6 +20,9 @@
     str_op1_in: .asciiz "Entre com o primeiro operando: "
     str_op2_in: .asciiz "\nEntre com o segundo operando: "
     str_error_choice:   .asciiz "\nErro: Escolha uma opcao valida!\n"
+    str_error_zero_div: .asciiz "\nErro: O divisor tem de ser diferente de zero.\n"
+    str_error_negative_exp: .asciiz "\nErro: O expoente nao pode ser negativo.\n"
+    str_error_overflow: .asciiz "\nErro: Digite um numero entre -32768 e 32767\n"
     str_continue:   .asciiz "\n(Aperte Enter para continuar)\n"
     str_enter:  .byte
     str_res: .asciiz "\nResultado: "
@@ -104,6 +107,9 @@
         move $a1, $t3
         jal mult_func
 
+        li $t7, -1
+        beq $v0, $t7, user_choose   # If an error occurs
+
         move $a0, $v0
         jal print_result
 
@@ -114,6 +120,9 @@
         move $a1, $t3
         jal divisao_func
 
+        li $t7, -1
+        beq $v0, $t7, user_choose   # If an error occurs
+
         move $a0, $v0
         jal print_result
 
@@ -123,6 +132,9 @@
         move $a0, $t2
         move $a1, $t3
         jal potencia_func
+
+        li $t7, -1
+        beq $v0, $t7, user_choose   # If an error occurs
 
         move $a0, $v0
         jal print_result
@@ -155,7 +167,6 @@
         syscall
 
         la $a0, str_continue
-        li $v0, 4
         syscall
 
         la $a0, str_enter
@@ -186,51 +197,39 @@
         syscall
 
         la $a0, str_op1
-        li $v0, 4
         syscall
 
         la $a0, str_op2
-        li $v0, 4
         syscall
 
         la $a0, str_op3
-        li $v0, 4
         syscall
 
         la $a0, str_op4
-        li $v0, 4
         syscall
 
         la $a0, str_op5
-        li $v0, 4
         syscall
 
         la $a0, str_op6
-        li $v0, 4
         syscall
 
         la $a0, str_op7
-        li $v0, 4
         syscall
 
         la $a0, str_op8
-        li $v0, 4
         syscall
 
         la $a0, str_op9
-        li $v0, 4
         syscall
 
         la $a0, str_op10
-        li $v0, 4
         syscall
 
         la $a0, str_op11
-        li $v0, 4
         syscall
 
         la $a0, str_usr_in
-        li $v0, 4
         syscall
 
         # Reads the user choice
@@ -320,8 +319,32 @@
         sw $fp, 0($sp)
         move $fp, $sp
 
-        mul $v0, $a0, $a1
+        addi $t7, $zero, -32768
+        addi $t8, $zero, 32767
+        blt $a0, $t7, error_overflow_mult
+        blt $a1, $t7, error_overflow_mult
+        bgt $a0, $t8, error_overflow_mult
+        bgt $a1, $t8, error_overflow_mult
 
+        mul $v0, $a0, $a1
+        j return_mult
+
+        error_overflow_mult:
+            la $a0, str_error_overflow
+            li $v0, 4
+            syscall
+
+            la $a0, str_continue
+            syscall
+
+            la $a0, str_enter
+            li $a1, 1
+            li $v0, 8
+            syscall
+
+            li $v0, -1  # Error return
+
+    return_mult:
         lw $a1, 12($sp)
         lw $a0, 8($sp)
         lw $ra, 4($sp)
@@ -338,8 +361,50 @@
         sw $fp, 0($sp)
         move $fp, $sp
 
-        div $v0, $a0, $a1
+        beq $a1, $zero, zero_div    # if the divisor is zero
 
+        addi $t7, $zero, -32768
+        addi $t8, $zero, 32767
+        blt $a0, $t7, error_overflow_div
+        blt $a1, $t7, error_overflow_div
+        bgt $a0, $t8, error_overflow_div
+        bgt $a1, $t8, error_overflow_div
+
+        div $v0, $a0, $a1
+        j return_div
+
+        zero_div:
+            la $a0, str_error_zero_div
+            li $v0, 4
+            syscall
+
+            la $a0, str_continue
+            syscall
+
+            la $a0, str_enter
+            li $a1, 1
+            li $v0, 8
+            syscall
+
+            li $v0, -1  # Error on operation
+            j return_div
+
+        error_overflow_div:
+            la $a0, str_error_overflow
+            li $v0, 4
+            syscall
+
+            la $a0, str_continue
+            syscall
+
+            la $a0, str_enter
+            li $a1, 1
+            li $v0, 8
+            syscall
+
+            li $v0, -1  # Error on operation
+
+    return_div:
         lw $a1, 12($sp)
         lw $a0, 8($sp)
         lw $ra, 4($sp)
@@ -356,12 +421,29 @@
         sw $fp, 0($sp)
         move $fp, $sp
 
+        blt $a1, $zero, error_negative_exp  # if the expoent is negative
+
         li $t8, 1
         li $v0, 1
         p_loop: blt $a1, $t8, sai_p_loop
             mul $v0, $v0, $a0
             addi $a1, $a1, -1
             j p_loop
+
+        error_negative_exp:
+            la $a0, str_error_negative_exp
+            li $v0, 4
+            syscall
+
+            la $a0, str_continue
+            syscall
+
+            la $a0, str_enter
+            li $a1, 1
+            li $v0,8
+            syscall
+
+            li $v0, -1  # return error (-1)
 
         sai_p_loop:
             lw $a1, 12($sp)
@@ -370,7 +452,7 @@
             lw $fp, 0($sp)
 
         addi $sp, $sp, 16
-        
+
         jr $ra
 
     imc_func:
