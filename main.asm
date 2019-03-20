@@ -3,6 +3,7 @@
 
 
 .data
+    zero_fp:    .double 0.0 # Zero constant
     str_title:  .asciiz "Bem-vindo a Calculadora Assembly\n"
     str_choose: .asciiz "\nEscolha uma das opcoes abaixo\n\n"
     str_op1:    .asciiz "[1] Soma\n"
@@ -19,13 +20,18 @@
     str_usr_in: .asciiz "-> "
     str_op1_in: .asciiz "Entre com o primeiro operando: "
     str_op2_in: .asciiz "\nEntre com o segundo operando: "
+    str_weight_in:    .asciiz "Entre com o peso (Ex: 54.12): "
+    str_height_in:    .asciiz "\nEntre com a altura (Ex: 1.78): "
     str_error_choice:   .asciiz "\nErro: Escolha uma opcao valida!\n"
     str_error_zero_div: .asciiz "\nErro: O divisor tem de ser diferente de zero.\n"
     str_error_negative_exp: .asciiz "\nErro: O expoente nao pode ser negativo.\n"
-    str_error_overflow: .asciiz "\nErro: Digite um numero entre -32768 e 32767\n"
+    str_error_overflow: .asciiz "\nErro: Digite um numero entre -32768 e 32767.\n"
+    str_error_height_neg_zero:  .asciiz "\nErro: A altura nao pode ser negativa ou igual a zero.\n"
+    str_error_weight:   .asciiz "\nErro: O peso nao pode ser negativo.\n"
     str_continue:   .asciiz "\n(Aperte Enter para continuar)\n"
     str_enter:  .byte
     str_res: .asciiz "\nResultado: "
+    str_imc_res:    .asciiz "\nO seu IMC e: "
 
 .text
 
@@ -42,6 +48,8 @@
         move $t0, $v0
         li $t1, 7
         bgt $t0, $t1, others_ops    # if($t0 > 7) If the user choice is greater than 7
+        li $t1, 6
+        beq $t0, $t1, imc   # Jump to imc function
         li $t1, 1
         blt $t0, $t1, error_choice  # if($t0 < 1) If the user choice is negative or invalid
 
@@ -76,8 +84,6 @@
         beq $t0, $t1, divisao
         li $t1, 5
         beq $t0, $t1, potencia
-        li $t1, 6
-        beq $t0, $t1, imc
         li $t1, 7
         beq $t0, $t1, fibonacci
 
@@ -107,7 +113,7 @@
         move $a1, $t3
         jal mult_func
 
-        li $t7, -1
+        addi $t7, $zero, 32767
         beq $v0, $t7, user_choose   # If an error occurs
 
         move $a0, $v0
@@ -120,7 +126,7 @@
         move $a1, $t3
         jal divisao_func
 
-        li $t7, -1
+        addi $t7, $zero, 32768
         beq $v0, $t7, user_choose   # If an error occurs
 
         move $a0, $v0
@@ -142,12 +148,46 @@
         j user_choose
 
     imc:
-        move $a0, $t2
-        move $a1, $t3
+        la $a0, str_weight_in
+        li $v0, 4
+        syscall
+
+        li $v0, 6
+        syscall
+        mov.s $f2, $f0
+
+        la $a0, str_height_in
+        li $v0, 4
+        syscall
+
+        li $v0, 6
+        syscall
+        mov.s $f3, $f0
+
         jal imc_func
 
-        move $a0, $v0
-        jal print_result
+        mov.s $f12, $f0 # Move the result of function to $f12
+
+        l.s $f8, zero_fp
+        c.eq.s $f0, $f8 # Verify if function returns error
+        bc1t user_choose
+
+        la $a0, str_imc_res
+        li $v0, 4
+        syscall
+
+        # Prints the result of IMC
+        li $v0, 2   # The result is in the correct register
+        syscall
+
+        la $a0, str_continue
+        li $v0, 4
+        syscall
+
+        la $a0, str_enter
+        li $a1, 1
+        li $v0, 8
+        syscall
 
         j user_choose
 
@@ -249,19 +289,19 @@
         sw $fp, 0($sp)
         move $fp, $sp
 
-        la $a0, str_res
+        la $a0, str_res # Prints Resultado:
         li $v0, 4
         syscall
 
-        lw $a0, 8($fp)
+        lw $a0, 8($fp)  # Prints the result
         li $v0, 1
         syscall
 
-        la $a0, str_continue
+        la $a0, str_continue    # Prints Aperte enter para continua
         li $v0, 4
         syscall
 
-        la $a0, str_enter
+        la $a0, str_enter   # Reads the enter
         li $a1, 1
         li $v0, 8
         syscall
@@ -342,7 +382,7 @@
             li $v0, 8
             syscall
 
-            li $v0, -1  # Error return
+            addi $v0, $zero, 32767  # Error return
 
     return_mult:
         lw $a1, 12($sp)
@@ -386,7 +426,7 @@
             li $v0, 8
             syscall
 
-            li $v0, -1  # Error on operation
+            addi $v0, $zero, 32768  # Error on operation
             j return_div
 
         error_overflow_div:
@@ -402,7 +442,7 @@
             li $v0, 8
             syscall
 
-            li $v0, -1  # Error on operation
+            addi $v0, $zero, 32768  # Error on operation
 
     return_div:
         lw $a1, 12($sp)
@@ -457,17 +497,61 @@
 
     imc_func:
         addi $sp, $sp, -16
-        sw $a1, 12($sp)
-        sw $a0, 8($sp)
+        s.s $f3, 12($sp)
+        s.s $f2, 8($sp)
         sw $ra, 4($sp)
         sw $fp, 0($sp)
         move $fp, $sp
 
-        mul $a1, $a1, $a1
-        div $v0, $a0, $a1
+        l.s $f8, zero_fp
+        c.le.s $f3, $f8   # if height is negative or equal to zero
+        bc1t height_negative_zero   # Branches if the floating point condition above is true
+        c.lt.s $f2, $f8    # if weight is negative
+        bc1t weight_negative    # Branches if the floating point condition above is true
 
-        lw $a1, 12($sp)
-        lw $a0, 8($sp)
+
+
+        mul.s $f3, $f3, $f3 # height * height
+        div.s $f0, $f2, $f3 # weight / (height * height)
+        j return_imc
+
+        height_negative_zero:
+            la $a0, str_error_height_neg_zero
+            li $v0, 4
+            syscall
+
+            la $a0, str_continue
+            li $v0, 4
+            syscall
+
+            la $a0, str_enter
+            li $a1, 1
+            li $v0, 8
+            syscall
+
+            mov.s $f0, $f8  # Returns 0 on error
+            j return_imc
+
+        weight_negative:
+            la $a0, str_error_weight
+            li $v0, 4
+            syscall
+
+            la $a0, str_continue
+            li $v0, 4
+            syscall
+
+            la $a0, str_enter
+            li $a1, 1
+            li $v0, 8
+            syscall
+
+            mov.s $f0, $f8
+            j return_imc
+
+    return_imc:
+        l.s $f3, 12($sp)
+        l.s $f2, 8($sp)
         lw $ra, 4($sp)
         lw $fp 0($sp)
         addi $sp, $sp, 16
