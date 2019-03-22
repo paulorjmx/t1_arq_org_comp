@@ -294,7 +294,7 @@
         sw $fp, 0($sp)
         move $fp, $sp
 
-        la $a0, str_res # Prints Resultado:
+        la $a0, str_res # Prints "Resultado:"
         li $v0, 4
         syscall
 
@@ -302,7 +302,7 @@
         li $v0, 1
         syscall
 
-        la $a0, str_continue    # Prints Aperte enter para continua
+        la $a0, str_continue    # Prints "Aperte enter para continua"
         li $v0, 4
         syscall
 
