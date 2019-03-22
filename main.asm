@@ -3,7 +3,7 @@
 
 
 .data
-    zero_fp:    .double 0.0 # Zero constant
+    zero_fp:    .double 0.0 # Zero float point constant
     str_title:  .asciiz "Bem-vindo a Calculadora Assembly\n"
     str_choose: .asciiz "\nEscolha uma das opcoes abaixo\n\n"
     str_op1:    .asciiz "[1] Soma\n"
@@ -42,6 +42,8 @@
         li $v0, 4
         syscall
 
+        # Prints the program's menu and get the user's choice
+        # print_menu get the user's choice and return in $v0
     user_choose: jal print_menu
 
         # Puts the user choice in $t0
@@ -152,6 +154,7 @@
         li $v0, 4
         syscall
 
+        # Get the user's weight (float point) input
         li $v0, 6
         syscall
         mov.s $f2, $f0
@@ -160,11 +163,12 @@
         li $v0, 4
         syscall
 
+        # Get the user's height (float point) input
         li $v0, 6
         syscall
         mov.s $f3, $f0
 
-        jal imc_func
+        jal imc_func    # Compute the IMC and put the result in the $f0
 
         mov.s $f12, $f0 # Move the result of function to $f12
 
@@ -195,12 +199,13 @@
 
 
 
+    # Below is the operation that uses one parameter only
     others_ops:
         li $t1, 11
         bge $t0, $t1, exit  # if($t0 > 11) exits. If the user choice is greater or equal 11
 
 
-    # Prints the error on screen and go to menu
+    # Prints the error related to the user's choice on screen and go to menu
     error_choice:
         la $a0, str_error_choice
         li $v0, 4
@@ -281,7 +286,7 @@
         addi $sp, $sp, 8
         jr $ra
 
-    # Print result
+    # Print integer result
     print_result:
         addi $sp, $sp, -12
         sw $a0, 8($sp)
@@ -333,6 +338,7 @@
 
         jr $ra
 
+    # Subtraction of two numbers
     sub_func:
         addi $sp, $sp, -16
         sw $a1, 12($sp)
@@ -351,6 +357,7 @@
 
         jr $ra
 
+    # Multiplication of two numbers
     mult_func:
         addi $sp, $sp, -16
         sw $a1, 12($sp)
@@ -369,6 +376,7 @@
         mul $v0, $a0, $a1
         j return_mult
 
+        # Error: Input overflow
         error_overflow_mult:
             la $a0, str_error_overflow
             li $v0, 4
@@ -393,6 +401,7 @@
 
         jr $ra
 
+    # Division of two numbers
     divisao_func:
         addi $sp, $sp, -16
         sw $a1, 12($sp)
@@ -413,6 +422,7 @@
         div $v0, $a0, $a1
         j return_div
 
+        # Error: Division by zero
         zero_div:
             la $a0, str_error_zero_div
             li $v0, 4
@@ -429,6 +439,7 @@
             addi $v0, $zero, 32768  # Error on operation
             j return_div
 
+        # Error: input overflow
         error_overflow_div:
             la $a0, str_error_overflow
             li $v0, 4
@@ -453,6 +464,7 @@
 
         jr $ra
 
+    # Power function
     potencia_func:
         addi $sp, $sp, -16
         sw $a1, 12($sp)
@@ -495,6 +507,7 @@
 
         jr $ra
 
+    # IMC function
     imc_func:
         addi $sp, $sp, -16
         s.s $f3, 12($sp)
@@ -515,6 +528,7 @@
         div.s $f0, $f2, $f3 # weight / (height * height)
         j return_imc
 
+        # Error: height is negative or equal to zero
         height_negative_zero:
             la $a0, str_error_height_neg_zero
             li $v0, 4
@@ -532,6 +546,7 @@
             mov.s $f0, $f8  # Returns 0 on error
             j return_imc
 
+        # Error: Weight is negative
         weight_negative:
             la $a0, str_error_weight
             li $v0, 4
