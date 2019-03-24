@@ -18,6 +18,7 @@
     str_op10:   .asciiz "[10] Fatorial\n"
     str_op11:   .asciiz "[11] Sair\n\n"
     str_usr_in: .asciiz "-> "
+    str_op_in:  .asciiz "\nEntre com o numero: "
     str_op1_in: .asciiz "Entre com o primeiro operando: "
     str_op2_in: .asciiz "\nEntre com o segundo operando: "
     str_weight_in:    .asciiz "Entre com o peso (Ex: 54.12): "
@@ -33,8 +34,12 @@
     str_continue:   .asciiz "\n(Aperte Enter para continuar)\n"
     str_res: .asciiz "\nResultado: "
     str_res_fibonacci:  .asciiz "\nSequencia de Fibonacci no intervalo: "
+    str_tabuada_res:    .asciiz "\nA tabuada de "
+    str_times:  .asciiz " x "
+    str_equal:  .asciiz " = "
     str_imc_res:    .asciiz "\nO seu IMC e: "
     str_space:  .asciiz " "
+    str_new_line:   .asciiz "\n"
     str_enter:  .byte
 
 .text
@@ -58,8 +63,7 @@
         li $t1, 6
         beq $t0, $t1, imc   # Jump to imc function
 
-    #seven_first_op:
-        # Print: Type the first operand
+        # Print: "Entre com o primeiro operando"
         la $a0, str_op1_in
         li $v0, 4
         syscall
@@ -69,7 +73,7 @@
         syscall
         move $t2, $v0
 
-        # Print: Type the second operand
+        # Print: "Entre com o segundo operando"
         la $a0, str_op2_in
         li $v0, 4
         syscall
@@ -153,6 +157,7 @@
         j user_choose
 
     imc:
+        # Print: "Entre com seu peso: "
         la $a0, str_weight_in
         li $v0, 4
         syscall
@@ -162,6 +167,7 @@
         syscall
         mov.s $f2, $f0
 
+        # Print "Entre com sua altura: "
         la $a0, str_height_in
         li $v0, 4
         syscall
@@ -179,12 +185,13 @@
         c.eq.s $f0, $f8 # Verify if function returns error
         bc1t user_choose
 
+        # Prints: "Seu IMC e: "
         la $a0, str_imc_res
         li $v0, 4
         syscall
 
         # Prints the result of IMC
-        li $v0, 2   # The result is in the correct register
+        li $v0, 2
         syscall
 
         la $a0, str_continue
@@ -211,6 +218,43 @@
     others_ops:
         li $t1, 11
         bge $t0, $t1, exit  # if($t0 > 11) exits. If the user choice is greater or equal 11
+
+        # Print: "Entre com o numero: "
+        la $a0, str_op_in
+        li $v0, 4
+        syscall
+
+        # Get the number type by user
+        li $v0, 5
+        syscall
+
+        li $t1, 8
+        bge $t0, $t1, square_root
+        li $t1, 9
+        bge $t0, $t1, tabuada
+        li $t1, 10
+        bge $t0, $t1, factorial
+
+        square_root:
+
+
+        tabuada:
+            move $a0, $v0
+            jal tabuada_func
+
+            j user_choose
+
+
+        factorial:
+            move $a0, $v0
+            jal factorial_func
+
+            blt $v0, $zero, user_choose # If an error occurs
+
+            move $a0, $v0
+            jal print_result
+
+            j user_choose
 
 
     # Prints the error related to the user's choice on screen and go to menu
@@ -541,6 +585,7 @@
             li $v0, 4
             syscall
 
+            # Wait for the user press enter to see the result
             la $a0, str_continue
             li $v0, 4
             syscall
@@ -550,7 +595,7 @@
             li $v0, 8
             syscall
 
-            mov.s $f0, $f8  # Returns 0 on error
+            mov.s $f0, $f8  # Return error
             j return_imc
 
         # Error: Weight is negative
@@ -559,6 +604,7 @@
             li $v0, 4
             syscall
 
+            # Wait for the user press enter to see the result
             la $a0, str_continue
             li $v0, 4
             syscall
@@ -568,8 +614,7 @@
             li $v0, 8
             syscall
 
-            mov.s $f0, $f8
-            j return_imc
+            mov.s $f0, $f8  # Return error
 
     return_imc:
         l.s $f3, 12($sp)
@@ -580,7 +625,7 @@
 
         jr $ra
 
-
+    # Fibonacci function
     fibonacci_func:
         addi $sp $sp, -16
         sw $a1, 12($sp)
@@ -665,5 +710,114 @@
             sw $ra, 4($sp)
             sw $fp, 0($sp)
             addi $sp, $sp, 16
+
+            jr $ra
+
+    # Factorial function
+    factorial_func:
+        addi $sp, $sp, -12
+        sw $a0, 8($sp)
+        sw $ra, 4($sp)
+        sw $fp, 0($sp)
+        move $fp, $sp
+
+        blt $a0, $zero, error_negative_factorial
+        li $v0, 1
+
+        # Loop to calculate the factorial
+        factorial_loop: ble $a0, $zero, return_factorial
+                        mul $v0, $v0, $a0
+                        addi $a0, $a0, -1
+                        j factorial_loop
+
+        # Print the error of negative argument
+        error_negative_factorial:
+                la $a0, str_error_negative
+                li $v0, 4
+                syscall
+
+                la $a0, str_continue
+                syscall
+
+                la $a0, str_enter
+                li $a1, 1
+                li $v0, 8
+                syscall
+
+                li $v0, -1
+
+        return_factorial:
+            lw $a0, 8($sp)
+            lw $ra, 4($sp)
+            lw $fp, 0($sp)
+            addi $sp, $sp, 12
+
+        jr $ra
+
+    # Tabuada function
+    tabuada_func:
+        addi $sp, $sp, -12
+        sw $a0, 8($sp)
+        sw $ra, 4($sp)
+        sw $fp, 0($sp)
+        move $fp, $sp
+
+        la $a0, str_tabuada_res
+        li $v0, 4
+        syscall
+
+        lw $a0, 8($fp)
+        li $v0, 1
+        syscall
+
+        move $t6, $a0
+        move $t5, $t6
+        li $t7, 1
+        li $t8, 10
+
+        tabuada_loop: bgt $t7, $t8, return_tabuada
+                      la $a0, str_new_line  # Print a new line
+                      li $v0, 4
+                      syscall
+
+                      move $a0, $t5 # Print the argument
+                      li $v0, 1
+                      syscall
+
+                      la $a0, str_times # Print " x "
+                      li $v0, 4
+                      syscall
+
+                      move $a0, $t7 # Print the increment
+                      li $v0, 1
+                      syscall
+
+                      la $a0, str_equal # Print " = "
+                      li $v0, 4
+                      syscall
+
+                      move $a0, $t6 # Print the result (this line combined form: a x i = i*c)
+                      li $v0, 1
+                      syscall
+
+                      add $t6, $t6, $t5 # Calculate the next result
+                      addi $t7, $t7, 1  # Increment
+                      j tabuada_loop
+
+        return_tabuada:
+            # Wait for the user press enter to see the result
+            la $a0, str_continue
+            li $v0, 4
+            syscall
+
+            la $a0, str_enter
+            li $a1, 1
+            li $v0, 8
+            syscall
+
+            lw $a0, 8($sp)
+            lw $ra, 4($sp)
+            lw $fp, 0($sp)
+            addi $sp, $sp, 12
 
             jr $ra
