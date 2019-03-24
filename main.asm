@@ -31,9 +31,11 @@
     str_error_negative:   .asciiz "\nErro: Digite um numero positivo.\n"
     str_error_interval:   .asciiz "\nErro: O primeiro numero e maior que o segundo.\n"
     str_continue:   .asciiz "\n(Aperte Enter para continuar)\n"
-    str_enter:  .byte
     str_res: .asciiz "\nResultado: "
+    str_res_fibonacci:  .asciiz "\nSequencia de Fibonacci no intervalo: "
     str_imc_res:    .asciiz "\nO seu IMC e: "
+    str_space:  .asciiz " "
+    str_enter:  .byte
 
 .text
 
@@ -605,11 +607,34 @@
 
 
         end_first_term_loop:
+            la $a0, str_res_fibonacci
+            li $v0, 4
+            syscall
+
             move $a0, $t9
             li $v0, 1
             syscall
 
-            j return_fib
+        # Continue to compute the sequence
+        second_term_loop: bge $t7, $a1, return_fib
+                          move $t6, $t9  # $t6 is like an auxiliar
+                          add $t9, $t9, $t8  # $t9 = Fn-1 + Fn-2
+                          move $t8, $t6
+                          addi $t7, $t7, 1
+
+                          # Print the parcial result
+                          la $a0, str_space
+                          li $v0, 4
+                          syscall
+
+                          move $a0, $t9
+                          li $v0, 1
+                          syscall
+
+                          j second_term_loop
+
+
+
 
         error_interval_negative:
             la $a0, str_error_interval
