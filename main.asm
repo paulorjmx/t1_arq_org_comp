@@ -28,6 +28,8 @@
     str_error_overflow: .asciiz "\nErro: Digite um numero entre -32768 e 32767.\n"
     str_error_height_neg_zero:  .asciiz "\nErro: A altura nao pode ser negativa ou igual a zero.\n"
     str_error_weight:   .asciiz "\nErro: O peso nao pode ser negativo.\n"
+    str_error_negative:   .asciiz "\nErro: Digite um numero positivo.\n"
+    str_error_interval:   .asciiz "\nErro: O primeiro numero e maior que o segundo.\n"
     str_continue:   .asciiz "\n(Aperte Enter para continuar)\n"
     str_enter:  .byte
     str_res: .asciiz "\nResultado: "
@@ -48,12 +50,11 @@
 
         # Puts the user choice in $t0
         move $t0, $v0
+        blt $t0, $zero, error_choice  # if($t0 < 0) If the user choice is negative or invalid
         li $t1, 7
         bgt $t0, $t1, others_ops    # if($t0 > 7) If the user choice is greater than 7
         li $t1, 6
         beq $t0, $t1, imc   # Jump to imc function
-        li $t1, 1
-        blt $t0, $t1, error_choice  # if($t0 < 1) If the user choice is negative or invalid
 
     #seven_first_op:
         # Print: Type the first operand
@@ -196,6 +197,11 @@
         j user_choose
 
     fibonacci:
+        move $a0, $t2
+        move $a1, $t3
+        jal fibonacci_func
+
+        j user_choose
 
 
 
@@ -478,9 +484,9 @@
         li $t8, 1
         li $v0, 1
         p_loop: blt $a1, $t8, sai_p_loop
-            mul $v0, $v0, $a0
-            addi $a1, $a1, -1
-            j p_loop
+                mul $v0, $v0, $a0
+                addi $a1, $a1, -1
+                j p_loop
 
         error_negative_exp:
             la $a0, str_error_negative_exp
@@ -502,10 +508,9 @@
             lw $a0, 8($sp)
             lw $ra, 4($sp)
             lw $fp, 0($sp)
+            addi $sp, $sp, 16
 
-        addi $sp, $sp, 16
-
-        jr $ra
+            jr $ra
 
     # IMC function
     imc_func:
@@ -568,7 +573,72 @@
         l.s $f3, 12($sp)
         l.s $f2, 8($sp)
         lw $ra, 4($sp)
-        lw $fp 0($sp)
+        lw $fp, 0($sp)
         addi $sp, $sp, 16
 
         jr $ra
+
+
+    fibonacci_func:
+        addi $sp $sp, -16
+        sw $a1, 12($sp)
+        sw $a0, 8($sp)
+        sw $ra, 4($sp)
+        sw $fp, 0($sp)
+        move $fp, $sp
+
+        ble $a0, $zero, error_negative_fib
+        ble $a1, $zero, error_negative_fib
+        bgt $a0, $a1, error_interval_negative
+
+        # Get the term of the sequence that correspond the first number in interval
+        li $t7, 1
+        li $t8, 0   # F1 = 1, the first term of fibonacci
+        li $t9, 1   # F2 = 1, the second term of fibonacci
+
+        first_term_loop: bge $t7, $a0, end_first_term_loop
+                         move $t6, $t9  # $t6 is like an auxiliar
+                         add $t9, $t9, $t8  # $t9 = Fn-1 + Fn-2
+                         move $t8, $t6
+                         addi $t7, $t7, 1
+                         j first_term_loop
+
+
+        end_first_term_loop:
+            move $a0, $t9
+            li $v0, 1
+            syscall
+
+            j return_fib
+
+        error_interval_negative:
+            la $a0, str_error_interval
+            li $v0, 4
+            syscall
+
+            j return_fib
+
+        error_negative_fib:
+            la $a0, str_error_negative
+            li $v0, 4
+            syscall
+
+
+        return_fib:
+            # Wait for the user press enter to see the result
+            la $a0, str_continue
+            li $v0, 4
+            syscall
+
+            la $a0, str_enter
+            li $a1, 1
+            li $v0, 8
+            syscall
+
+            sw $a1, 12($sp)
+            sw $a0, 8($sp)
+            sw $ra, 4($sp)
+            sw $fp, 0($sp)
+            addi $sp, $sp, 16
+
+            jr $ra
