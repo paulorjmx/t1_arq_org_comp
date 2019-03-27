@@ -3,7 +3,10 @@
 
 
 .data
-    zero_fp:    .double 0.0 # Zero float point constant
+    e_fp:  .float 0.000001 # Error constant used in square root function
+    one_fp:    .float 1.0  # One constant used in square root function
+    two_fp:    .float 2.0  # Two
+    zero_fp:    .float 0.0 # Zero float point constant used in square root and imc function
     str_title:  .asciiz "Bem-vindo a Calculadora Assembly\n"
     str_choose: .asciiz "\nEscolha uma das opcoes abaixo\n\n"
     str_op1:    .asciiz "[1] Soma\n"
@@ -218,6 +221,8 @@
     others_ops:
         li $t1, 11
         bge $t0, $t1, exit  # if($t0 > 11) exits. If the user choice is greater or equal 11
+        li $t1, 8
+        bge $t0, $t1, square_root
 
         # Print: "Entre com o numero: "
         la $a0, str_op_in
@@ -228,14 +233,44 @@
         li $v0, 5
         syscall
 
-        li $t1, 8
-        bge $t0, $t1, square_root
         li $t1, 9
         bge $t0, $t1, tabuada
         li $t1, 10
         bge $t0, $t1, factorial
 
         square_root:
+            la $a0, str_op_in
+            li $v0, 4
+            syscall
+
+            li $v0, 6
+            syscall
+
+            mov.s $f2, $f0
+            jal square_root_func
+
+            c.lt.s $f0, $f10 # If the return value is negative
+            bc1t user_choose
+
+            # Prints the result
+            la $a0, str_res
+            li $v0, 4
+            syscall
+
+            mov.s $f12, $f0
+            li $v0, 2
+            syscall
+
+            la $a0, str_continue
+            li $v0, 4
+            syscall
+
+            la $a0, str_enter
+            li $a1, 1
+            li $v0, 8
+            syscall
+
+            j user_choose
 
 
         tabuada:
@@ -567,7 +602,7 @@
         sw $fp, 0($sp)
         move $fp, $sp
 
-        l.s $f8, zero_fp
+        l.s $f8, zero_fp    # Load the constant 0.0 into $f8
         c.le.s $f3, $f8   # if height is negative or equal to zero
         bc1t height_negative_zero   # Branches if the floating point condition above is true
         c.lt.s $f2, $f8    # if weight is negative
@@ -677,8 +712,6 @@
                           syscall
 
                           j second_term_loop
-
-
 
 
         error_interval_negative:
@@ -816,6 +849,57 @@
             syscall
 
             lw $a0, 8($sp)
+            lw $ra, 4($sp)
+            lw $fp, 0($sp)
+            addi $sp, $sp, 12
+
+            jr $ra
+
+    # Square root funtion (Babylonian method)
+    square_root_func:
+        addi $sp, $sp, -12
+        s.s $f2, 8($sp) # $f2 = n (argument of function)
+        sw $ra, 4($sp)
+        sw $fp, 0($sp)
+        move $fp, $sp
+
+        l.s $f10, zero_fp    # Load 0.0 from memory
+        c.lt.s $f2, $f10
+        bc1t error_negative_square
+
+        # Load constants
+        l.s $f3, e_fp # Error constant
+        l.s $f4, one_fp # $f4 = y
+        l.s $f5, two_fp # Two constant used in loop
+
+        mov.s $f6, $f2  # $f6 = x; (x = n)
+
+        square_root_loop: sub.s $f7, $f6, $f4   # $f6 = (x - y)
+                          c.lt.s $f7, $f3   # (x - y) < e
+                          bc1t return_square_root
+                          add.s $f6, $f6, $f4   # x = (x + y)
+                          div.s $f6, $f6, $f5   # x = x / 2
+                          div.s $f4, $f2, $f6   # y = n / x
+                          mov.s $f0, $f6    # return value in $f0
+                          j square_root_loop
+
+
+        error_negative_square:
+            la $a0, str_error_negative
+            li $v0, 4
+            syscall
+
+            la $a0, str_continue
+            syscall
+
+            la $a0, str_enter
+            li $a1, 1
+            li $v0, 8
+            syscall
+
+
+    return_square_root:
+            l.s $f2, 8($sp)
             lw $ra, 4($sp)
             lw $fp, 0($sp)
             addi $sp, $sp, 12
