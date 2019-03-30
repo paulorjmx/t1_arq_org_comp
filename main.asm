@@ -31,7 +31,7 @@
     str_error_negative_exp: .asciiz "\nErro: O expoente nao pode ser negativo.\n"
     str_error_overflow: .asciiz "\nErro: Digite um numero entre -32768 e 32767.\n"
     str_error_height_neg_zero:  .asciiz "\nErro: A altura nao pode ser negativa ou igual a zero.\n"
-    str_error_weight:   .asciiz "\nErro: O peso nao pode ser negativo.\n"
+    str_error_weight:   .asciiz "\nErro: O peso nao pode ser negativo ou igual a zero.\n"
     str_error_negative:   .asciiz "\nErro: Digite um numero positivo.\n"
     str_error_interval:   .asciiz "\nErro: O primeiro numero e maior que o segundo.\n"
     str_continue:   .asciiz "\n(Aperte Enter para continuar)\n"
@@ -222,7 +222,7 @@
         li $t1, 11
         bge $t0, $t1, exit  # if($t0 > 11) exits. If the user choice is greater or equal 11
         li $t1, 8
-        bge $t0, $t1, square_root
+        beq $t0, $t1, square_root
 
         # Print: "Entre com o numero: "
         la $a0, str_op_in
@@ -234,9 +234,9 @@
         syscall
 
         li $t1, 9
-        bge $t0, $t1, tabuada
+        beq $t0, $t1, tabuada
         li $t1, 10
-        bge $t0, $t1, factorial
+        beq $t0, $t1, factorial
 
         square_root:
             la $a0, str_op_in
@@ -603,10 +603,10 @@
         move $fp, $sp
 
         l.s $f8, zero_fp    # Load the constant 0.0 into $f8
+        c.le.s $f2, $f8    # if weight is negative or equal to zero
+        bc1t weight_negative    # Branches if the floating point condition above is true
         c.le.s $f3, $f8   # if height is negative or equal to zero
         bc1t height_negative_zero   # Branches if the floating point condition above is true
-        c.lt.s $f2, $f8    # if weight is negative
-        bc1t weight_negative    # Branches if the floating point condition above is true
 
 
 
