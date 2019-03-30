@@ -4,8 +4,8 @@
 
 .data
     e_fp:  .float 0.000001 # Error constant used in square root function
-    one_fp:    .float 1.0  # One constant used in square root function
-    two_fp:    .float 2.0  # Two
+    one_fp:    .float 1.0  # constant used in square root function
+    two_fp:    .float 2.0  # Constant used in square root function
     zero_fp:    .float 0.0 # Zero float point constant used in square root and imc function
     str_title:  .asciiz "Bem-vindo a Calculadora Assembly\n"
     str_choose: .asciiz "\nEscolha uma das opcoes abaixo\n\n"
@@ -870,7 +870,7 @@
         # Load constants
         l.s $f3, e_fp # Error constant
         l.s $f4, one_fp # $f4 = y
-        l.s $f5, two_fp # Two constant used in loop
+        l.s $f5, two_fp # Constant used in loop
 
         mov.s $f6, $f2  # $f6 = x; (x = n)
 
